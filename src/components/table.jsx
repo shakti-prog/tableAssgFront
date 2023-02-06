@@ -11,13 +11,16 @@ function Table() {
   const [loading, setLoading] = useState(true);
   const [basicSearch, setBasicSearch] = useState({});
 
-  const handleChange = (column, e) => {   //for handling input field changes for searching
+  const handleChange = async(column, e) => {
+    //for handling input field changes for searching
     let obj = { ...basicSearch };
     obj[column] = e.target.value;
-    setBasicSearch(obj);
+     setBasicSearch(obj);
+    await getFilter();
   };
 
-  const getFilter = async (e) => {                //filter function 
+  const getFilter = async (e) => {
+    //filter function
     await fetch("http://localhost:5000/basicSearch", {
       method: "POST",
       mode: "cors",
@@ -30,7 +33,6 @@ function Table() {
       .then((data) => {
         setLoading(true);
         let newObj = { ...tableData };
-        newObj.columns = data.columns;
         newObj.data = data.data;
         setTableData(newObj);
         setLoading(false);
@@ -56,25 +58,31 @@ function Table() {
       });
   }, [fetchData]);
 
-
-
-  const handleReset = () => {     //Rest button 
-    setBasicSearch({});           
+  const handleReset = () => {
+    //Rest button
+    setBasicSearch({});
     setFetchData(!fetchData);
+    const allInput = document.getElementsByName("inputfields");
+    for (let i = 0; i < allInput.length; i++) {
+      allInput[i].value = "";
+    }
   };
 
-
-  const sortHandler = async(column,order) => {    //sortHandling
+  const sortHandler = async (column, order) => {
+    //sortHandling
     let num = 1;
-    if(order==='DESC'){
+    if (order === "DESC") {
       num = -1;
-    } 
-    const obj = {}
+    }
+    const obj = {};
     obj[column] = num;
     await fetch("http://localhost:5000/sort", {
       method: "POST",
       mode: "cors",
-      body: JSON.stringify(obj),
+      body: JSON.stringify({
+        "sortingCondition":obj,
+        "filteringCondition":basicSearch
+      }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",
       },
@@ -83,13 +91,12 @@ function Table() {
       .then((data) => {
         setLoading(true);
         let newObj = { ...tableData };
-        newObj.columns = data.columns;
         newObj.data = data.data;
         setTableData(newObj);
         setLoading(false);
       })
       .catch((error) => console.log(error));
-  } 
+  };
 
   // Table displaying section
 
@@ -135,14 +142,14 @@ function Table() {
                       <button
                         className="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                         type="button"
-                        onClick={()=>sortHandler(column,"ASC")}
+                        onClick={() => sortHandler(column, "ASC")}
                       >
                         Asc
                       </button>
                       <button
                         className="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                         type="button"
-                        onClick={()=>sortHandler(column,"DESC")}
+                        onClick={() => sortHandler(column, "DESC")}
                       >
                         Desc
                       </button>
@@ -150,7 +157,7 @@ function Table() {
                     <div className="mb-3 pt-0">
                       <input
                         type="text"
-                        name="input"
+                        name="inputfields"
                         placeholder={column}
                         onChange={(e) => handleChange(column, e)}
                         className="px-2 py-1 mt-2 placeholder-slate-300 text-slate-600 relative bg-white  rounded text-sm border border-slate-300 outline-none focus:outline-none focus:ring w-full"
